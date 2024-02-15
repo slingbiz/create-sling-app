@@ -64,7 +64,7 @@ async function main() {
     try {
       fs.rmdirSync(path.join(projectPath, "bin"), { recursive: true });
     } catch (e) {
-      console.log("Error in removing bin folder", e);
+    //   console.log("Error in removing bin folder", e);
     }
     console.log("The installation is completed, Go Sling your app.\n");
 
