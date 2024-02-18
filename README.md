@@ -125,4 +125,4 @@ An obvious requirement for page editors is that they need to allow users to edit
 
 ## Getting Help :wave:
 
-If you have questions or there's something you'd like to discuss (eg: contributing), please head over to our [Discord](https://discord.gg/to-be-updated) server.
+If you have questions or there's something you'd like to discuss (eg: contributing), please head over to our [Discord](https://discord.gg/A3skgMEF) server.
