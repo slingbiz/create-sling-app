@@ -5,7 +5,7 @@
 </div>
 
 <div align="center" style={{d}}>
-  <img src="./sling_biz_sling_image.jpg"/>
+  <img src="https://sling.biz/assets/images/sling_biz_sling_image.jpg"/>
 </div>
 
 <p align="center">
