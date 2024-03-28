@@ -5,7 +5,7 @@
 </div>
 
 <div align="center" style={{d}}>
-  <img src="https://media.licdn.com/dms/image/D4D33AQHjvgoJ_3M2qQ/productpage-image_1128_635/0/1708026592525/sling_biz_sling_image?e=1708632000&v=beta&t=Fu32kVnAezD1a7mR2oUGMZjDo-RvFbmf5gC-pleREQg"/>
+  <img src="./sling_biz_sling_image.jpg"/>
 </div>
 
 <p align="center">
