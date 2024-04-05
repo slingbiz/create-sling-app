@@ -121,7 +121,7 @@ An obvious requirement for page editors is that they need to allow users to edit
 ## Acknowledgements :raised_hands:
 
 - **[react-dnd](https://github.com/react-dnd/react-dnd)** The React drag-n-drop library.
-  Although it is not actually used here, many aspects of Craft.js are written with react-dnd as a reference along with some utilities and functions being borrowed.
+  Although it is not actually used here, many aspects of Sling.biz are written with react-dnd as a reference along with some utilities and functions being borrowed.
 
 ## Getting Help :wave:
 
