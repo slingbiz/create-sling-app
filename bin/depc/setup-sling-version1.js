@@ -6,8 +6,8 @@ const fs = require("fs-extra");
 const path = require("path");
 const { spawn } = require("child_process");
 const dotenv = require("dotenv");
-const ora = require("ora");
-const colors = require("colors");
+const chalk = require("chalk");
+const { exec } = require("child_process");
 
 const FE_REPO_URL = "https://github.com/slingbiz/sling-fe.git";
 const API_REPO_URL = "https://github.com/slingbiz/sling-api.git";
@@ -25,11 +25,6 @@ const QUESTIONS = [
     type: "input",
     message: "Enter the name of your project:",
     default: "sling-project",
-    validate: function (input) {
-      if (/^([A-Za-z\-\_\d])+$/.test(input)) return true;
-      else
-        return "Project name may only include letters, numbers, underscores, and hashes.";
-    },
   },
 ];
 
@@ -37,16 +32,19 @@ const HOSTED_QUESTIONS = [
   {
     name: "clientKeySecret",
     type: "input",
-    message: `
-Enter your NEXT_PUBLIC_CLIENT_KEY_SECRET (You can get this key after successful signup on studio.sling.biz and get the key from company settings.
-You can also skip it and update it later in the .env):\n`,
+    message: `${chalk.blue.bold(
+      "Enter your NEXT_PUBLIC_CLIENT_KEY_SECRET (You can get this key after successful signup on"
+    )} ${chalk.underline.blue("studio.sling.biz")} ${chalk.blue.bold(
+      "and get the key from company settings.\nYou can also skip it and update it later in the .env):"
+    )}\n`,
     default: "",
   },
   {
     name: "clientId",
     type: "input",
-    message:
-      "\nEnter your NEXT_PUBLIC_CLIENT_ID (For example, your@email.com):\n",
+    message: chalk.blue.bold(
+      "\nEnter your NEXT_PUBLIC_CLIENT_ID (For example, your@email.com):\n"
+    ),
     default: "",
   },
 ];
@@ -76,9 +74,9 @@ const createProject = async () => {
       await setupSelfHostedDashboard(projectPath, git);
     }
 
-    console.log("Project setup is complete!".green);
+    console.log("Project setup is complete!");
   } catch (error) {
-    console.error("Error setting up the project:".red, error);
+    console.error("Error setting up the project:", error);
   }
 };
 
@@ -88,7 +86,7 @@ const setupHostedSolution = async (projectPath, git) => {
   console.log("Cloning the sling-fe repository...");
   await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"));
 
-  const feEnvPath = path.join(projectPath, "sling-fe", ".env.example");
+  const feEnvPath = path.join(projectPath, "sling-fe", ".env.sample");
   const finalEnvPath = path.join(projectPath, "sling-fe", ".env");
 
   const envConfig = dotenv.parse(fs.readFileSync(feEnvPath));
@@ -101,26 +99,16 @@ const setupHostedSolution = async (projectPath, git) => {
     .join("\n");
 
   fs.writeFileSync(finalEnvPath, envFileContent);
-  console.log(`.env file created at ${finalEnvPath}`.blue);
+  console.log(`.env file created at ${finalEnvPath}`);
 
-  const spinner = ora("Installing dependencies...").start();
-  try {
-    await installDependencies(path.join(projectPath, "sling-fe"), true); // Enable output for debugging
-    spinner.succeed("Dependencies installed successfully.");
-  } catch (error) {
-    spinner.fail("Error installing dependencies.");
-    throw error;
-  }
+  console.log("Installing dependencies...");
+  await installDependencies(path.join(projectPath, "sling-fe"));
 
   console.log("Starting the sling-fe service...");
-  await runCommandInBackground(
-    "yarn",
-    ["run", "dev"],
-    path.join(projectPath, "sling-fe")
-  );
+  await runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-fe"));
 
   console.log(
-    `Open ${"http://localhost:4087".underline.blue} in your browser.`
+    `Open ${chalk.underline.blue("http://localhost:4087")} in your browser.`
   );
 };
 
@@ -139,10 +127,10 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
   const feEnvPath = path.join(projectPath, "sling-fe", ".env.example");
   const finalFeEnvPath = path.join(projectPath, "sling-fe", ".env");
 
-  const apiEnvPath = path.join(projectPath, "sling-api", ".env.example");
+  const apiEnvPath = path.join(projectPath, "sling-api", ".env.sample");
   const finalApiEnvPath = path.join(projectPath, "sling-api", ".env");
 
-  const studioEnvPath = path.join(projectPath, "sling-studio", ".env.sample");
+  const studioEnvPath = path.join(projectPath, "sling-studio", ".env.example");
   const finalStudioEnvPath = path.join(projectPath, "sling-studio", ".env");
 
   const feEnvConfig = dotenv.parse(fs.readFileSync(feEnvPath));
@@ -156,99 +144,45 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
       .map(([key, value]) => `${key}=${value}`)
       .join("\n");
     fs.writeFileSync(outputPath, envFileContent);
-    console.log(`.env file created at ${outputPath}`.blue);
+    console.log(`.env file created at ${outputPath}`);
   };
 
   writeEnvFile(feEnvConfig, finalFeEnvPath);
   writeEnvFile(apiEnvConfig, finalApiEnvPath);
   writeEnvFile(studioEnvConfig, finalStudioEnvPath);
 
-  const spinner = ora("Installing dependencies...").start();
-  try {
-    await installDependencies(path.join(projectPath, "sling-fe"), true); // Enable output for debugging
-    await installDependencies(path.join(projectPath, "sling-api"), true); // Enable output for debugging
-    await installDependencies(path.join(projectPath, "sling-studio"), true); // Enable output for debugging
-    spinner.succeed("Dependencies installed successfully.");
-  } catch (error) {
-    spinner.fail("Error installing dependencies.");
-    throw error;
-  }
+  console.log("Installing dependencies...");
+  await installDependencies(path.join(projectPath, "sling-fe"));
+  await installDependencies(path.join(projectPath, "sling-api"));
+  await installDependencies(path.join(projectPath, "sling-studio"));
 
   console.log("Starting all services...");
-  try {
-    await runCommandInBackground(
-      "yarn",
-      ["run", "dev"],
-      path.join(projectPath, "sling-fe")
-    );
-    await runCommandInBackground(
-      "yarn",
-      ["run", "dev"],
-      path.join(projectPath, "sling-api")
-    );
-    await runCommandInBackground(
-      "yarn",
-      ["run", "dev"],
-      path.join(projectPath, "sling-studio")
-    );
-  } catch (error) {
-    console.error("Error starting services:".red, error);
-  }
+  runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-fe"));
+  runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-api"));
+  runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-studio"));
 
   console.log(
-    `Open ${
-      "http://localhost:4087".underline.blue
-    } in your browser for the frontend. Open ${
-      "http://localhost:2021".underline.blue
-    } for the studio.`
+    `Open ${chalk.underline.blue(
+      "http://localhost:4087"
+    )} in your browser for the frontend. Open ${chalk.underline.blue(
+      "http://localhost:2021"
+    )} for the studio.`
   );
   console.log(
-    `Once you sign up and finish the company setup, copy the client key from the studio to sling-fe's .env as ${
-      "NEXT_PUBLIC_CLIENT_KEY_SECRET".bold
-    } and your email as ${"NEXT_PUBLIC_CLIENT_ID".bold}.`
+    `Once you sign up and finish the company setup, copy the client key from the studio to sling-fe's .env as ${chalk.bold(
+      "NEXT_PUBLIC_CLIENT_KEY_SECRET"
+    )} and your email as ${chalk.bold("NEXT_PUBLIC_CLIENT_ID")}.`
   );
 };
 
-const runCommandInBackground = (command, args, cwd) => {
+const runCommand = (command, args, cwd) => {
   return new Promise((resolve, reject) => {
-    const cmd = spawn(command, args, {
-      cwd,
-      detached: true,
-      stdio: "ignore",
-    });
-
-    cmd.on("error", (error) => {
-      reject(error);
-    });
-
-    cmd.unref();
-    resolve();
-  });
-};
-
-const runCommand = (command, args, cwd, showOutput = true) => {
-  return new Promise((resolve, reject) => {
-    const cmd = spawn(command, args, {
-      cwd,
-      stdio: showOutput ? "inherit" : "pipe",
-    });
-
-    let errorOutput = "";
-
-    if (cmd.stderr) {
-      cmd.stderr.on("data", (data) => {
-        errorOutput += data.toString();
-      });
-    }
+    const cmd = spawn(command, args, { cwd, stdio: "inherit" });
 
     cmd.on("close", (code) => {
       if (code !== 0) {
         reject(
-          new Error(
-            `${command} ${args.join(
-              " "
-            )} failed with code ${code}\n${errorOutput}`
-          )
+          new Error(`${command} ${args.join(" ")} failed with code ${code}`)
         );
         return;
       }
@@ -257,12 +191,12 @@ const runCommand = (command, args, cwd, showOutput = true) => {
   });
 };
 
-const installDependencies = async (projectPath, showOutput) => {
+const installDependencies = async (projectPath) => {
   try {
-    console.log(`Installing dependencies in ${projectPath}`);
-    await runCommand("yarn", ["install"], projectPath, showOutput); // Enable or disable output based on the flag
+    console.log(`Running 'yarn install' in ${projectPath}`);
+    await runCommand("yarn", ["install"], projectPath);
   } catch (error) {
-    console.error("Error installing dependencies:".red, error);
+    console.error(error);
     throw error;
   }
 };
