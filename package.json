@@ -1,6 +1,6 @@
 {
   "name": "create-sling-app",
-  "version": "1.3.8",
+  "version": "1.3.9",
   "description": "Sling Setup Assistant",
   "main": "index.js",
   "author": "sling",
