@@ -204,7 +204,9 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
       "http://localhost:4087".underline.blue
     } in your browser for the frontend.\nOpen ${
       "http://localhost:2021".underline.blue
-    } for the studio.\n`
+    } for the studio.\nOpen ${
+      "http://localhost:10001".underline.blue
+    } for the API.\n`
   );
   console.log(
     `Once you sign up and finish the company setup, copy the client key from the studio to sling-fe's .env as ${
