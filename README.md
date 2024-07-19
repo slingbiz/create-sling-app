@@ -27,7 +27,7 @@ To properly set up Sling, you need:
 - **MongoDB URI**: Make sure you have a MongoDB instance running and obtain its URI.
 - **Node.js**: Ensure you have Node.js version 18 or greater installed.
 
-## 🚀 Setting up Sling Project with Hosted Studio
+## 🚀 Setting up Sling - Hosted Studio
 
 To set up a Sling project locally using [Hosted Studio](https://studio.sling.biz/), follow these steps:
 
@@ -60,8 +60,7 @@ To set up a Sling project locally using [Hosted Studio](https://studio.sling.biz
    3. **Modify content from Studio** and view the changes in your pages.
 
 
-
-## 🌐 Setting up Self-Hosted Sling Studio
+## 🌐 Setting up Sling - Self Hosted Studio
 
 If you prefer to host Sling Studio on your local machine, follow these instructions. Sling consists of three main parts: Sling Studio, Sling API, and Sling FE.
 
