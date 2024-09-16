@@ -89,4 +89,6 @@ If you prefer to host Sling Studio on your local machine, follow these instructi
 
 ## 🙋 Getting Help :wave:
 
-If you have questions or there's something you'd like to discuss (eg: contributing or queries), please head over to our [Slack](https://slingbiz.slack.com/archives/C06KE4ZMSQP) channel.
+If you have any questions or something you'd like to discuss (e.g., contributing or queries), please head over to our [Slack](https://slingbiz.slack.com/archives/C06KE4ZMSQP) channel.
+
+Alternatively, you can raise a [GitHub issue](https://github.com/slingbiz/sling-fe/issues), or reach out directly to the author via [Email](mailto:ankur@sling.biz) or [LinkedIn](https://www.linkedin.com/in/ankurpata/).
