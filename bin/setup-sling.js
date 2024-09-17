@@ -61,6 +61,14 @@ const SELF_HOSTED_QUESTIONS = [
   },
 ];
 
+const removeGitFolder = async (projectPath) => {
+  const gitFolderPath = path.join(projectPath, ".git");
+  if (fs.existsSync(gitFolderPath)) {
+    await fs.remove(gitFolderPath);
+    console.log(".git folder removed from", projectPath);
+  }
+};
+
 const createProject = async () => {
   console.log("\nWelcome to the Sling Project Setup!".bold.green);
   console.log("Let's get started...\n".bold);
@@ -91,6 +99,7 @@ const setupHostedSolution = async (projectPath, git) => {
 
   console.log("\nCloning the sling-fe repository...".cyan);
   await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"));
+  await removeGitFolder(path.join(projectPath, "sling-fe"));
 
   const feEnvPath = path.join(projectPath, "sling-fe", ".env.example");
   const finalEnvPath = path.join(projectPath, "sling-fe", ".env");
@@ -126,6 +135,11 @@ const setupHostedSolution = async (projectPath, git) => {
   console.log(
     `\nOpen ${"http://localhost:4087".underline.blue} in your browser.\n`
   );
+  console.log(
+    `Once you sign up and finish the company setup, copy the keys from ${"https://studio.sling.biz/settings/keys-usage".underline.blue} and add them to your .env file as below and restart your server.\n`
+  );
+  console.log(`NEXT_PUBLIC_CLIENT_KEY_SECRET=your-sling-secret-key`.green);
+  console.log(`NEXT_PUBLIC_CLIENT_ID=your@email.id\n`.green);
 };
 
 const setupSelfHostedDashboard = async (projectPath, git) => {
@@ -133,12 +147,15 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
 
   console.log("\nCloning the sling-fe repository...".cyan);
   await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"));
+  await removeGitFolder(path.join(projectPath, "sling-fe"));
 
   console.log("\nCloning the sling-api repository...".cyan);
   await git.clone(API_REPO_URL, path.join(projectPath, "sling-api"));
+  await removeGitFolder(path.join(projectPath, "sling-api"));
 
   console.log("\nCloning the sling-studio repository...".cyan);
   await git.clone(STUDIO_REPO_URL, path.join(projectPath, "sling-studio"));
+  await removeGitFolder(path.join(projectPath, "sling-studio"));
 
   const feEnvPath = path.join(projectPath, "sling-fe", ".env.example");
   const finalFeEnvPath = path.join(projectPath, "sling-fe", ".env");
