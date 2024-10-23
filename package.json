@@ -1,16 +1,16 @@
 {
   "name": "create-sling-app",
-  "version": "1.4.8",
+  "version": "1.4.9",
   "description": "Sling Setup Assistant",
   "main": "index.js",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/slingbiz/sling-fe/issues"
+    "url": "https://github.com/slingbiz/sling/issues"
   },
   "homepage": "https://www.sling.biz",
   "repository": {
     "type": "git",
-    "url": "git@github.com:slingbiz/sling-fe.git"
+    "url": "git@github.com:slingbiz/sling.git"
   },
   "author": {
     "name": "Sling.biz",
