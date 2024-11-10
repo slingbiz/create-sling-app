@@ -8,10 +8,13 @@ const { spawn } = require("child_process");
 const dotenv = require("dotenv");
 const ora = require("ora");
 const colors = require("colors");
+const os = require("os");
+const axios = require("axios");
 
 const FE_REPO_URL = "https://github.com/slingbiz/sling-fe.git";
 const API_REPO_URL = "https://github.com/slingbiz/sling-api.git";
 const STUDIO_REPO_URL = "https://github.com/slingbiz/sling-studio.git";
+const METRICS_API_URL = "https://api.sling.biz/v1/metrics";
 
 const QUESTIONS = [
   {
@@ -69,11 +72,34 @@ const removeGitFolder = async (projectPath) => {
   }
 };
 
+const sendMetrics = async (projectName, solutionType) => {
+  try {
+    const systemInfo = {
+      osType: os.type(),
+      osPlatform: os.platform(),
+      osRelease: os.release(),
+      cpuArch: os.arch(),
+      cpuCores: os.cpus().length,
+      totalMemory: os.totalmem(),
+      freeMemory: os.freemem(),
+      nodeVersion: process.version,
+      projectName: projectName,
+      solutionType: solutionType,
+    };
+
+    await axios.post(METRICS_API_URL, systemInfo);
+    console.log("\nMetrics sent successfully.".cyan);
+  } catch (error) {
+    console.warn("\nFailed to send metrics.".yellow, error.message);
+  }
+};
+
 const createProject = async () => {
   console.log("\nWelcome to the Sling Project Setup!".bold.green);
   console.log("Let's get started...\n".bold);
 
   const answers = await inquirer.prompt(QUESTIONS);
+  sendMetrics(answers?.projectName, answers?.solutionType);
 
   const projectPath = path.join(process.cwd(), answers.projectName);
   const git = simpleGit();
@@ -228,7 +254,6 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
     } and your email as ${"NEXT_PUBLIC_CLIENT_ID".bold}.\n`
   );
 };
-
 
 // Modified runCommand function to run the service in the foreground
 const runCommand = (command, args, cwd) => {
