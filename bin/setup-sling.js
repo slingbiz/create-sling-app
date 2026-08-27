@@ -6,6 +6,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const { spawn } = require("child_process");
 const dotenv = require("dotenv");
+const { ensureMongo } = require("./mongo-bootstrap");
 const ora = require("ora");
 const colors = require("colors");
 
@@ -160,6 +161,21 @@ const setupHostedSolution = async (projectPath, git) => {
 
 const setupSelfHostedDashboard = async (projectPath, git) => {
   const answers = await inquirer.prompt(SELF_HOSTED_QUESTIONS);
+
+  const spinner = ora("Checking MongoDB...").start();
+  try {
+    const mongo = await ensureMongo(answers.mongoUri);
+    answers.mongoUri = mongo.uri;
+    if (mongo.startedDocker) {
+      spinner.succeed("Started MongoDB in Docker on localhost:27017.".green);
+    } else {
+      spinner.succeed("MongoDB is reachable.".green);
+    }
+  } catch (error) {
+    spinner.fail("MongoDB is not ready.".red);
+    console.error(`\n${error.message}`.red);
+    throw error;
+  }
 
   console.log("\nCloning the sling-fe repository...".cyan);
   await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"), [
