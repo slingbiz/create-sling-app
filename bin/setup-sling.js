@@ -13,6 +13,12 @@ const FE_REPO_URL = "https://github.com/slingbiz/sling-fe.git";
 const API_REPO_URL = "https://github.com/slingbiz/sling-api.git";
 const STUDIO_REPO_URL = "https://github.com/slingbiz/sling-studio.git";
 
+const INSTALL_ENV = {
+  ...process.env,
+  HUSKY: "0",
+  HUSKY_SKIP_INSTALL: "1",
+};
+
 const QUESTIONS = [
   {
     name: "solutionType",
@@ -59,14 +65,28 @@ const SELF_HOSTED_QUESTIONS = [
     message: "Enter your MongoDB URI:",
     default: "mongodb://localhost:27017/sling",
   },
+  {
+    name: "geminiKey",
+    type: "input",
+    message:
+      "Enter your GEMINI_API_KEY (aistudio.google.com/apikey). Skip to add it later — Create will not generate without it:",
+    default: "",
+  },
 ];
 
 const removeGitFolder = async (projectPath) => {
   const gitFolderPath = path.join(projectPath, ".git");
   if (fs.existsSync(gitFolderPath)) {
     await fs.remove(gitFolderPath);
-    // console.log(".git folder removed from", projectPath);
   }
+};
+
+const writeEnvFile = (envConfig, outputPath) => {
+  const envFileContent = Object.entries(envConfig)
+    .map(([key, value]) => `${key}=${value}`)
+    .join("\n");
+  fs.writeFileSync(outputPath, envFileContent);
+  console.log(`\n.env file created at ${outputPath}`.blue);
 };
 
 const createProject = async () => {
@@ -98,7 +118,10 @@ const setupHostedSolution = async (projectPath, git) => {
   const answers = await inquirer.prompt(HOSTED_QUESTIONS);
 
   console.log("\nCloning the sling-fe repository...".cyan);
-  await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"));
+  await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"), [
+    "--depth",
+    "1",
+  ]);
   await removeGitFolder(path.join(projectPath, "sling-fe"));
 
   const feEnvPath = path.join(projectPath, "sling-fe", ".env.example");
@@ -109,12 +132,7 @@ const setupHostedSolution = async (projectPath, git) => {
   envConfig.NEXT_PUBLIC_CLIENT_ID = answers.clientId;
   delete envConfig.NEXT_PUBLIC_API_URL;
 
-  const envFileContent = Object.entries(envConfig)
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  fs.writeFileSync(finalEnvPath, envFileContent);
-  console.log(`\n.env file created at ${finalEnvPath}`.blue);
+  writeEnvFile(envConfig, finalEnvPath);
 
   const spinner = ora("Installing dependencies...").start();
   try {
@@ -126,35 +144,40 @@ const setupHostedSolution = async (projectPath, git) => {
   }
 
   console.log(
+    `\nCreate pages in hosted Studio: ${
+      "https://studio.sling.biz/create".underline.blue
+    }`
+  );
+  console.log(
+    `Storefront (after keys): ${"http://localhost:4087".underline.blue}\n`
+  );
+
+  console.log(
     "\nStarting the sling-fe service (Press Ctrl + C to stop)...".cyan
   );
-
-  // Run the service in foreground, allowing users to stop it with Ctrl + C
   await runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-fe"));
-
-  console.log(
-    `\nOpen ${"http://localhost:4087".underline.blue} in your browser.\n`
-  );
-  console.log(
-    `Once you sign up and finish the company setup, copy the keys from ${
-      "https://studio.sling.biz/settings/keys-usage".underline.blue
-    } and add them to your .env file as:\n`
-  );
-  console.log(`NEXT_PUBLIC_CLIENT_KEY_SECRET=your-sling-secret-key`.green);
-  console.log(`NEXT_PUBLIC_CLIENT_ID=your@email.id\n`.green);
 };
 
 const setupSelfHostedDashboard = async (projectPath, git) => {
   const answers = await inquirer.prompt(SELF_HOSTED_QUESTIONS);
 
   console.log("\nCloning the sling-fe repository...".cyan);
-  await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"));
+  await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"), [
+    "--depth",
+    "1",
+  ]);
 
   console.log("\nCloning the sling-api repository...".cyan);
-  await git.clone(API_REPO_URL, path.join(projectPath, "sling-api"));
+  await git.clone(API_REPO_URL, path.join(projectPath, "sling-api"), [
+    "--depth",
+    "1",
+  ]);
 
   console.log("\nCloning the sling-studio repository...".cyan);
-  await git.clone(STUDIO_REPO_URL, path.join(projectPath, "sling-studio"));
+  await git.clone(STUDIO_REPO_URL, path.join(projectPath, "sling-studio"), [
+    "--depth",
+    "1",
+  ]);
 
   const feEnvPath = path.join(projectPath, "sling-fe", ".env.example");
   const finalFeEnvPath = path.join(projectPath, "sling-fe", ".env");
@@ -169,15 +192,12 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
   const apiEnvConfig = dotenv.parse(fs.readFileSync(apiEnvPath));
   const studioEnvConfig = dotenv.parse(fs.readFileSync(studioEnvPath));
 
-  apiEnvConfig.MONGO_URI = answers.mongoUri;
-
-  const writeEnvFile = (envConfig, outputPath) => {
-    const envFileContent = Object.entries(envConfig)
-      .map(([key, value]) => `${key}=${value}`)
-      .join("\n");
-    fs.writeFileSync(outputPath, envFileContent);
-    console.log(`\n.env file created at ${outputPath}`.blue);
-  };
+  apiEnvConfig.NODE_ENV = "development";
+  apiEnvConfig.MONGODB_URL = answers.mongoUri;
+  delete apiEnvConfig.MONGO_URI;
+  apiEnvConfig.GEMINI_API_KEY = answers.geminiKey || "";
+  apiEnvConfig.GENERATE_DAILY_LIMIT = "0";
+  delete apiEnvConfig.GENERATE_ONLY;
 
   writeEnvFile(feEnvConfig, finalFeEnvPath);
   writeEnvFile(apiEnvConfig, finalApiEnvPath);
@@ -185,13 +205,11 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
 
   const spinner = ora("Installing dependencies...").start();
   try {
-    // Install dependencies for all the repositories with the .git folder intact
     await installDependencies(path.join(projectPath, "sling-fe"));
     await installDependencies(path.join(projectPath, "sling-api"));
     await installDependencies(path.join(projectPath, "sling-studio"));
     spinner.succeed("Dependencies installed successfully.".green);
 
-    // After dependencies are installed, remove the .git folder
     console.log("\nRemoving .git folders...".cyan);
     await removeGitFolder(path.join(projectPath, "sling-fe"));
     await removeGitFolder(path.join(projectPath, "sling-api"));
@@ -202,40 +220,57 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
     throw error;
   }
 
-  console.log("\nStarting all services (Press Ctrl + C to stop each)...".cyan);
-
-  // Run each service in the foreground, so the user can control them manually
-  await runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-fe"));
-  await runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-api"));
-  await runCommand(
-    "yarn",
-    ["run", "dev"],
-    path.join(projectPath, "sling-studio")
-  );
-
   console.log(
-    `\nOpen ${
-      "http://localhost:4087".underline.blue
-    } in your browser for the frontend.\nOpen ${
-      "http://localhost:2021".underline.blue
-    } for the studio.\nOpen ${
-      "http://localhost:10001".underline.blue
-    } for the API.\n`
+    `\nCreate pages in Studio: ${
+      "http://localhost:2021/create".underline.blue
+    }`
   );
+  console.log(`API: ${"http://localhost:10001".underline.blue}`);
+  console.log(`Storefront: ${"http://localhost:4087".underline.blue}\n`);
+  if (!answers.geminiKey) {
+    console.log(
+      "No Gemini key yet. Add GEMINI_API_KEY to sling-api/.env before Create will generate.\n"
+        .yellow
+    );
+  }
   console.log(
-    `Once you sign up and finish the company setup, copy the client key from the studio to sling-fe's .env as ${
+    `After you sign up in Studio, copy the client key into sling-fe/.env as ${
       "NEXT_PUBLIC_CLIENT_KEY_SECRET".bold
     } and your email as ${"NEXT_PUBLIC_CLIENT_ID".bold}.\n`
   );
+
+  console.log(
+    "Starting API, Studio, and the storefront together (Ctrl + C stops all)...\n"
+      .cyan
+  );
+
+  const children = [
+    startInBackground(
+      "yarn",
+      ["run", "dev"],
+      path.join(projectPath, "sling-api")
+    ),
+    startInBackground(
+      "yarn",
+      ["run", "dev"],
+      path.join(projectPath, "sling-studio")
+    ),
+    startInBackground(
+      "yarn",
+      ["run", "dev"],
+      path.join(projectPath, "sling-fe")
+    ),
+  ];
+  await waitUntilStopped(children);
 };
 
-
-// Modified runCommand function to run the service in the foreground
 const runCommand = (command, args, cwd) => {
   return new Promise((resolve, reject) => {
     const cmd = spawn(command, args, {
       cwd,
-      stdio: "inherit", // Allowing the output to be visible in the terminal
+      stdio: "inherit",
+      env: INSTALL_ENV,
+      shell: process.platform === "win32",
     });
 
     cmd.on("close", (code) => {
@@ -250,13 +285,33 @@ const runCommand = (command, args, cwd) => {
   });
 };
 
+const startInBackground = (command, args, cwd) => {
+  return spawn(command, args, {
+    cwd,
+    stdio: "inherit",
+    env: INSTALL_ENV,
+    shell: process.platform === "win32",
+  });
+};
+
+const waitUntilStopped = (children) =>
+  new Promise(() => {
+    const stop = () => {
+      children.forEach((child) => {
+        if (child && !child.killed) {
+          child.kill("SIGINT");
+        }
+      });
+      process.exit(0);
+    };
+    process.on("SIGINT", stop);
+    process.on("SIGTERM", stop);
+  });
+
 const installDependencies = async (projectPath) => {
   try {
     console.log(`\nInstalling dependencies in ${projectPath}`.yellow);
-    // Use HUSKY_SKIP_INSTALL to prevent Husky from trying to install hooks
-    await runCommand("yarn", ["install"], projectPath, true, {
-      env: { ...process.env, HUSKY_SKIP_INSTALL: "1" },
-    });
+    await runCommand("yarn", ["install"], projectPath);
   } catch (error) {
     console.error("Error installing dependencies:".red, error);
     throw error;
