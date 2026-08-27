@@ -25,3 +25,9 @@ test("self-host starts API and Studio together, not the storefront first", () =>
 test("does not clone sling-ai", () => {
   assert.doesNotMatch(src, /sling-ai/);
 });
+
+test("self-host ensures Mongo before clone", () => {
+  const selfHost = src.slice(src.indexOf("const setupSelfHostedDashboard"));
+  assert.match(selfHost, /ensureMongo/);
+  assert.match(src, /mongo-bootstrap/);
+});

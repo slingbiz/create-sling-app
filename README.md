@@ -18,7 +18,7 @@ Sling CMS is the open source governed AI CMS. Describe a page, get widgets you g
 ## Prerequisites
 
 - Node.js 18 or greater
-- MongoDB (self-host only)
+- MongoDB (self-host only). If you have none, the installer starts it in Docker. No Docker? Install Docker Desktop, install Mongo locally, or paste a free [Atlas](https://cloud.mongodb.com) URI.
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) (self-host Create)
 
 ## Quick start
