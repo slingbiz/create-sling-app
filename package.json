@@ -1,6 +1,6 @@
 {
   "name": "create-sling-app",
-  "version": "1.4.9",
+  "version": "1.5.0",
   "description": "Sling Setup Assistant",
   "main": "index.js",
   "license": "MIT",
@@ -36,6 +36,7 @@
     "create-sling-app": "./bin/setup-sling.js"
   },
   "scripts": {
+    "test": "node --test bin/setup-sling.test.js",
     "watch": "parcel watch",
     "build": "parcel build ./bin/setup-sling.js"
   }
