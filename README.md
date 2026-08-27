@@ -1,6 +1,6 @@
 
 <div align="center">
-  <h1>Create Sling App</h1>
+  <h1>Create Sling CMS App</h1>
 </div>
 
 <div align="center">
@@ -13,7 +13,7 @@
   </strong>
 </p>
 
-Open source governed AI CMS. Describe a page, get widgets you govern, a template, and a unique URL.
+Sling CMS is the open source governed AI CMS. Describe a page, get widgets you govern, a template, and a unique URL.
 
 ## Prerequisites
 

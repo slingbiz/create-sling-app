@@ -90,7 +90,7 @@ const writeEnvFile = (envConfig, outputPath) => {
 };
 
 const createProject = async () => {
-  console.log("\nWelcome to the Sling Project Setup!".bold.green);
+  console.log("\nWelcome to the Sling CMS Project Setup!".bold.green);
   console.log("Let's get started...\n".bold);
 
   const answers = await inquirer.prompt(QUESTIONS);
