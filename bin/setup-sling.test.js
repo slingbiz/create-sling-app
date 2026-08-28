@@ -31,3 +31,12 @@ test("self-host ensures Mongo before clone", () => {
   assert.match(selfHost, /ensureMongo/);
   assert.match(src, /mongo-bootstrap/);
 });
+
+test("self-host auto-picks one company and does not require a key paste first", () => {
+  const selfHost = src.slice(src.indexOf("const setupSelfHostedDashboard"));
+  assert.match(src, /STOREFRONT_AUTO_TENANT = "1"/);
+  assert.match(selfHost, /NEXT_PUBLIC_CLIENT_KEY_SECRET = ""/);
+  assert.match(selfHost, /NEXT_PUBLIC_CLIENT_ID = ""/);
+  assert.match(selfHost, /Sign up in Studio, then open the storefront/);
+  assert.match(selfHost, /A second company is a choice/);
+});

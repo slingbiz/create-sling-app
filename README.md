@@ -43,6 +43,8 @@ Picks the hosted option, clones the storefront, and points at [studio.sling.biz]
 
 Picks self-hosted. Clones Studio, API, and the storefront. You bring MongoDB and a Gemini key. Create is unlimited on your box (`GENERATE_DAILY_LIMIT=0`).
 
+Sign up in Studio, then open the storefront. One company is picked automatically. A second company: paste that company’s key from Settings → Keys into `sling-fe/.env` and restart.
+
 Open:
 
 - Create: `http://localhost:2021/create`

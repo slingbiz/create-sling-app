@@ -213,7 +213,12 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
   delete apiEnvConfig.MONGO_URI;
   apiEnvConfig.GEMINI_API_KEY = answers.geminiKey || "";
   apiEnvConfig.GENERATE_DAILY_LIMIT = "0";
+  apiEnvConfig.STOREFRONT_AUTO_TENANT = "1";
   delete apiEnvConfig.GENERATE_ONLY;
+
+  feEnvConfig.NEXT_PUBLIC_CLIENT_KEY_SECRET = "";
+  feEnvConfig.NEXT_PUBLIC_CLIENT_ID = "";
+  feEnvConfig.NEXT_PUBLIC_API_URL = "http://localhost:10001";
 
   writeEnvFile(feEnvConfig, finalFeEnvPath);
   writeEnvFile(apiEnvConfig, finalApiEnvPath);
@@ -250,9 +255,13 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
     );
   }
   console.log(
-    `After you sign up in Studio, copy the client key into sling-fe/.env as ${
-      "NEXT_PUBLIC_CLIENT_KEY_SECRET".bold
-    } and your email as ${"NEXT_PUBLIC_CLIENT_ID".bold}.\n`
+    "Sign up in Studio, then open the storefront. One company is picked automatically.\n"
+      .cyan
+  );
+  console.log(
+    `A second company is a choice: paste that company’s key from Studio ${
+      "Settings → Keys".bold
+    } into sling-fe/.env, then restart the storefront.\n`
   );
 
   console.log(
