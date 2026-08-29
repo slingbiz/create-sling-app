@@ -32,6 +32,13 @@ test("self-host ensures Mongo before clone", () => {
   assert.match(src, /mongo-bootstrap/);
 });
 
+test("self-host installer parses (no duplicate spinner)", () => {
+  require("child_process").execFileSync(process.execPath, [
+    "--check",
+    path.join(__dirname, "setup-sling.js"),
+  ]);
+});
+
 test("self-host auto-picks one company and does not require a key paste first", () => {
   const selfHost = src.slice(src.indexOf("const setupSelfHostedDashboard"));
   assert.match(src, /STOREFRONT_AUTO_TENANT = "1"/);
