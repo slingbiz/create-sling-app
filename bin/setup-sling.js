@@ -5,6 +5,8 @@ const simpleGit = require("simple-git");
 const fs = require("fs-extra");
 const path = require("path");
 const { spawn } = require("child_process");
+const https = require("https");
+const os = require("os");
 const dotenv = require("dotenv");
 const { ensureMongo } = require("./mongo-bootstrap");
 const ora = require("ora");
@@ -13,6 +15,7 @@ const colors = require("colors");
 const FE_REPO_URL = "https://github.com/slingbiz/sling-fe.git";
 const API_REPO_URL = "https://github.com/slingbiz/sling-api.git";
 const STUDIO_REPO_URL = "https://github.com/slingbiz/sling-studio.git";
+const METRICS_API_URL = "https://api.sling.biz/v1/metrics";
 
 const INSTALL_ENV = {
   ...process.env,
@@ -90,11 +93,42 @@ const writeEnvFile = (envConfig, outputPath) => {
   console.log(`\n.env file created at ${outputPath}`.blue);
 };
 
+const sendMetrics = (projectName, solutionType) => {
+  const body = JSON.stringify({
+    osType: os.type(),
+    osPlatform: os.platform(),
+    osRelease: os.release(),
+    cpuArch: os.arch(),
+    cpuCores: os.cpus().length,
+    totalMemory: os.totalmem(),
+    freeMemory: os.freemem(),
+    nodeVersion: process.version,
+    projectName,
+    solutionType,
+  });
+  const url = new URL(METRICS_API_URL);
+  const req = https.request(
+    {
+      hostname: url.hostname,
+      path: url.pathname,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": Buffer.byteLength(body),
+      },
+    },
+    () => {},
+  );
+  req.on("error", () => {});
+  req.end(body);
+};
+
 const createProject = async () => {
   console.log("\nWelcome to the Sling CMS Project Setup!".bold.green);
   console.log("Let's get started...\n".bold);
 
   const answers = await inquirer.prompt(QUESTIONS);
+  sendMetrics(answers.projectName, answers.solutionType);
 
   const projectPath = path.join(process.cwd(), answers.projectName);
   const git = simpleGit();
