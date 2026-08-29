@@ -47,3 +47,12 @@ test("self-host auto-picks one company and does not require a key paste first", 
   assert.match(selfHost, /Sign up in Studio, then open the storefront/);
   assert.match(selfHost, /A second company is a choice/);
 });
+
+test("install hides yarn noise and shows sling.biz progress", () => {
+  assert.match(src, /runQuiet/);
+  assert.match(src, /--silent/);
+  assert.doesNotMatch(src, /stdio: "inherit"[\s\S]*yarn", \["install"/);
+  assert.match(src, /printBanner/);
+  assert.match(src, /Installing Studio packages/);
+  assert.doesNotMatch(src, /Installing dependencies in \$\{projectPath\}/);
+});
