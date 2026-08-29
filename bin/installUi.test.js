@@ -15,6 +15,22 @@ test("prints a sling.biz banner", () => {
   assert.match(logs.join("\n"), /Sling CMS/);
 });
 
+test("next steps send people to Studio then the storefront", () => {
+  const { printRunningNextSteps } = require("./installUi");
+  const logs = [];
+  const original = console.log;
+  console.log = (line) => logs.push(String(line));
+  try {
+    printRunningNextSteps({});
+  } finally {
+    console.log = original;
+  }
+  const text = logs.join("\n");
+  assert.match(text, /localhost:2021/);
+  assert.match(text, /localhost:4087/);
+  assert.match(text, /Sign up/);
+});
+
 test("progress can set a hint and stop", () => {
   const progress = startProgress();
   progress.hint("Installing Studio packages");

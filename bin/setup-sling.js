@@ -4,12 +4,13 @@ const inquirer = require("inquirer");
 const simpleGit = require("simple-git");
 const fs = require("fs-extra");
 const path = require("path");
+const net = require("net");
 const { spawn } = require("child_process");
 const https = require("https");
 const os = require("os");
 const dotenv = require("dotenv");
 const { ensureMongo } = require("./mongo-bootstrap");
-const { printBanner, startProgress } = require("./installUi");
+const { printBanner, startProgress, printRunningNextSteps } = require("./installUi");
 const colors = require("colors");
 
 const FE_REPO_URL = "https://github.com/slingbiz/sling-fe.git";
@@ -267,50 +268,43 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
     throw error;
   }
 
-  console.log(
-    `  Create pages in Studio: ${
-      "http://localhost:2021/create".underline.blue
-    }`
-  );
-  console.log(`  API: ${"http://localhost:10001".underline.blue}`);
-  console.log(`  Storefront: ${"http://localhost:4087".underline.blue}\n`);
-  if (!answers.geminiKey) {
-    console.log(
-      "  No Gemini key yet. Add GEMINI_API_KEY to sling-api/.env before Create will generate.\n"
-        .yellow
-    );
-  }
-  console.log(
-    "  Sign up in Studio, then open the storefront. One company is picked automatically.\n"
-      .cyan
-  );
-  console.log(
-    `  A second company is a choice: paste that company’s key from Studio ${
-      "Settings → Keys".bold
-    } into sling-fe/.env, then restart the storefront.\n`
-  );
-
-  console.log(
-    "  Starting API, Studio, and the storefront (Ctrl + C stops all)…\n".cyan
-  );
+  const logDir = path.join(projectPath, ".sling-logs");
+  await fs.ensureDir(logDir);
+  const boot = startProgress();
+  boot.hint("Starting Studio and the storefront");
 
   const children = [
     startInBackground(
       "yarn",
       ["run", "dev"],
-      path.join(projectPath, "sling-api")
+      path.join(projectPath, "sling-api"),
+      path.join(logDir, "api.log")
     ),
     startInBackground(
       "yarn",
       ["run", "dev"],
-      path.join(projectPath, "sling-studio")
+      path.join(projectPath, "sling-studio"),
+      path.join(logDir, "studio.log")
     ),
     startInBackground(
       "yarn",
       ["run", "dev"],
-      path.join(projectPath, "sling-fe")
+      path.join(projectPath, "sling-fe"),
+      path.join(logDir, "storefront.log")
     ),
   ];
+
+  try {
+    await waitForPort(10001);
+    await waitForPort(2021);
+    await waitForPort(4087);
+    boot.succeed("Studio and the storefront are running.");
+  } catch (error) {
+    boot.fail("Could not start. Check .sling-logs in the project folder.");
+    throw error;
+  }
+
+  printRunningNextSteps({ geminiMissing: !answers.geminiKey });
   await waitUntilStopped(children);
 };
 
@@ -374,14 +368,36 @@ const runQuiet = (command, args, cwd) => {
   });
 };
 
-const startInBackground = (command, args, cwd) => {
+const startInBackground = (command, args, cwd, logFile) => {
+  const out = logFile
+    ? fs.openSync(logFile, "a")
+    : "ignore";
   return spawn(command, args, {
     cwd,
-    stdio: "inherit",
+    stdio: ["ignore", out, out],
     env: INSTALL_ENV,
     shell: process.platform === "win32",
   });
 };
+
+const waitForPort = (port, timeoutMs = 90000) =>
+  new Promise((resolve, reject) => {
+    const started = Date.now();
+    const tryOnce = () => {
+      const socket = net.connect({ port, host: "127.0.0.1" }, () => {
+        socket.end();
+        resolve();
+      });
+      socket.on("error", () => {
+        if (Date.now() - started > timeoutMs) {
+          reject(new Error(`Nothing is listening on localhost:${port}`));
+          return;
+        }
+        setTimeout(tryOnce, 400);
+      });
+    };
+    tryOnce();
+  });
 
 const waitUntilStopped = (children) =>
   new Promise(() => {

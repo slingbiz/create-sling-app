@@ -14,7 +14,7 @@ test("self-host writes MONGODB_URL and a Gemini key, not MONGO_URI", () => {
 
 test("self-host starts API and Studio together, not the storefront first", () => {
   assert.match(src, /startInBackground/);
-  assert.match(src, /localhost:2021\/create/);
+  assert.match(src, /waitForPort\(2021\)/);
   assert.match(src, /waitUntilStopped/);
   const selfHost = src.slice(src.indexOf("const setupSelfHostedDashboard"));
   assert.match(selfHost, /startInBackground\([\s\S]*sling-api/);
@@ -44,8 +44,15 @@ test("self-host auto-picks one company and does not require a key paste first", 
   assert.match(src, /STOREFRONT_AUTO_TENANT = "1"/);
   assert.match(selfHost, /NEXT_PUBLIC_CLIENT_KEY_SECRET = ""/);
   assert.match(selfHost, /NEXT_PUBLIC_CLIENT_ID = ""/);
-  assert.match(selfHost, /Sign up in Studio, then open the storefront/);
-  assert.match(selfHost, /A second company is a choice/);
+});
+
+test("after start, tells people to sign up on Studio and preview on the storefront", () => {
+  assert.match(src, /printRunningNextSteps/);
+  const ui = fs.readFileSync(path.join(__dirname, "installUi.js"), "utf8");
+  assert.match(ui, /Sign up at/);
+  assert.match(ui, /localhost:2021/);
+  assert.match(ui, /Preview Studio changes at/);
+  assert.match(ui, /localhost:4087/);
 });
 
 test("install hides yarn noise and shows sling.biz progress", () => {
