@@ -224,12 +224,12 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
   writeEnvFile(apiEnvConfig, finalApiEnvPath);
   writeEnvFile(studioEnvConfig, finalStudioEnvPath);
 
-  const spinner = ora("Installing dependencies...").start();
+  const installSpinner = ora("Installing dependencies...").start();
   try {
     await installDependencies(path.join(projectPath, "sling-fe"));
     await installDependencies(path.join(projectPath, "sling-api"));
     await installDependencies(path.join(projectPath, "sling-studio"));
-    spinner.succeed("Dependencies installed successfully.".green);
+    installSpinner.succeed("Dependencies installed successfully.".green);
 
     console.log("\nRemoving .git folders...".cyan);
     await removeGitFolder(path.join(projectPath, "sling-fe"));
@@ -237,7 +237,7 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
     await removeGitFolder(path.join(projectPath, "sling-studio"));
     console.log(".git folders removed.".green);
   } catch (error) {
-    spinner.fail("Error installing dependencies.".red);
+    installSpinner.fail("Error installing dependencies.".red);
     throw error;
   }
 
