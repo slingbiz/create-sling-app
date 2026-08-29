@@ -1,7 +1,7 @@
 {
   "name": "create-sling-app",
-  "version": "1.4.9",
-  "description": "Sling Setup Assistant",
+  "version": "1.5.4",
+  "description": "Sling CMS Setup Assistant",
   "main": "index.js",
   "license": "MIT",
   "bugs": {
@@ -36,6 +36,7 @@
     "create-sling-app": "./bin/setup-sling.js"
   },
   "scripts": {
+    "test": "node --test bin/setup-sling.test.js bin/mongo-bootstrap.test.js",
     "watch": "parcel watch",
     "build": "parcel build ./bin/setup-sling.js"
   }

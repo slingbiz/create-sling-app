@@ -1,6 +1,6 @@
 
 <div align="center">
-  <h1>Create Sling App</h1>
+  <h1>Create Sling CMS App</h1>
 </div>
 
 <div align="center">
@@ -9,86 +9,54 @@
 
 <p align="center">
   <strong>
-    <a href="https://studio.sling.biz">🚀 Live Demo</a>
+    <a href="https://studio.sling.biz/create">Live Create</a>
   </strong>
 </p>
 
-Open source drag and drop frontend CMS in NextJs. Completely customizable Pages, Templates & Widgets written in NextJs. Sling is an Open Source alternative to Builder.io.
+Sling CMS is the open source governed AI CMS. Describe a page, get widgets you govern, a template, and a unique URL.
 
-## ✨ Features :fire:
+## Prerequisites
 
-- **It's just React & NodeJs**
-- **Control how your components are edited**: With Sling.biz, you control the React widgets and their props from the Studio directly.
+- Node.js 18 or greater
+- MongoDB (self-host only). If you have none, the installer starts it in Docker. No Docker? Install Docker Desktop, install Mongo locally, or paste a free [Atlas](https://cloud.mongodb.com) URI.
+- A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey) (self-host Create)
 
-## 🛠️ Prerequisites
+## Quick start
 
-To properly set up Sling, you need:
+```sh
+npx create-sling-app my-site
+```
 
-- **MongoDB URI**: Make sure you have a MongoDB instance running and obtain its URI.
-- **Node.js**: Ensure you have Node.js version 18 or greater installed.
+or
 
-## 🚀 Setting up Sling - Hosted Studio
+```sh
+yarn create sling-app my-site
+```
 
-To set up a Sling project locally using [Hosted Studio](https://studio.sling.biz/), follow these steps:
+Do not run `npm i create-sling-app`. That installs a library; it does not scaffold a project.
 
-### Frontend App Setup
+### Hosted Studio
 
-1. **Use the Installer**:
-   - Create the Sling Frontend app by running the following command:
-     ```sh
-     yarn create sling-app my-project
-     ```
-   - Follow the prompts to configure your Sling app.
+Picks the hosted option, clones the storefront, and points at [studio.sling.biz](https://studio.sling.biz/create). Paste keys from Settings after signup.
 
-      
+### Self-hosted Studio
 
-2. **Obtain Sling Studio Keys**
+Picks self-hosted. Clones Studio, API, and the storefront. You bring MongoDB and a Gemini key. Create is unlimited on your box (`GENERATE_DAILY_LIMIT=0`).
 
-    
-   - Visit [Sling Studio](https://studio.sling.biz/) to sign up to create an account.
-   - Complete the company setup.
-   - Navigate to your account settings or profile section.
-   - Locate the section for accessing or generating Sling Studio Keys.
-   - Copy the keys provided and update them in the `.env` file for the frontend app.
-   - **Voilà!** You can now access your app at [http://localhost:4087](http://localhost:4087).
-! 
+Sign up in Studio, then open the storefront. One company is picked automatically. A second company: paste that company’s key from Settings → Keys into `sling-fe/.env` and restart.
 
-3. **Play around**
+Open:
 
-   1. Access  [Sling Studio](https://studio.sling.biz/) .
-   2. **Create custom widgets** and use them in your page templates.
-   3. **Modify content from Studio** and view the changes in your pages.
+- Create: `http://localhost:2021/create`
+- API: `http://localhost:10001`
+- Storefront: `http://localhost:4087`
 
-
-## 🌐 Setting up Sling - Self Hosted Studio
-
-If you prefer to host Sling Studio on your local machine, follow these instructions. Sling consists of three main parts: Sling Studio, Sling API, and Sling FE.
-
-1. **Run the Installer**:
-   - Use the installer to set up the Sling project by running the following command:
-     ```sh
-     yarn create sling-app my-project
-     ```
-
-2. **Follow the prompts to configure your Sling app** by picking self hosted option. The starter script will start the services in the background but you can close it and start on your own.
-
-
-3. **Open your browser and navigate to**:
-   - Frontend: `http://localhost:4087`
-   - Studio: `http://localhost:2021`
-   - API: `http://localhost:10001`
-
-
-## 📚 Docs
+## Docs
 
 - [Website](https://sling.biz)
 - [Documentation](https://sling.biz/documentation/)
-- [Demo](https://studio.sling.biz)
+- [Studio](https://studio.sling.biz)
 
+## Help
 
-
-## 🙋 Getting Help :wave:
-
-If you have any questions or something you'd like to discuss (e.g., contributing or queries), please head over to our [Slack](https://slingbiz.slack.com/archives/C06KE4ZMSQP) channel.
-
-Alternatively, you can raise a [GitHub issue](https://github.com/slingbiz/sling/issues), or reach out directly to the author via [Email](mailto:ankur@sling.biz) or [LinkedIn](https://www.linkedin.com/in/ankurpata/).
+[GitHub issues](https://github.com/slingbiz/sling/issues) or [ankur@sling.biz](mailto:ankur@sling.biz).
