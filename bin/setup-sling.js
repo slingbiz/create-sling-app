@@ -7,7 +7,7 @@ const path = require("path");
 const { spawn } = require("child_process");
 const dotenv = require("dotenv");
 const { ensureMongo } = require("./mongo-bootstrap");
-const ora = require("ora");
+const { printBanner, startProgress } = require("./installUi");
 const colors = require("colors");
 
 const FE_REPO_URL = "https://github.com/slingbiz/sling-fe.git";
@@ -18,6 +18,7 @@ const INSTALL_ENV = {
   ...process.env,
   HUSKY: "0",
   HUSKY_SKIP_INSTALL: "1",
+  npm_config_loglevel: "error",
 };
 
 const QUESTIONS = [
@@ -87,12 +88,10 @@ const writeEnvFile = (envConfig, outputPath) => {
     .map(([key, value]) => `${key}=${value}`)
     .join("\n");
   fs.writeFileSync(outputPath, envFileContent);
-  console.log(`\n.env file created at ${outputPath}`.blue);
 };
 
 const createProject = async () => {
-  console.log("\nWelcome to the Sling CMS Project Setup!".bold.green);
-  console.log("Let's get started...\n".bold);
+  printBanner();
 
   const answers = await inquirer.prompt(QUESTIONS);
 
@@ -100,7 +99,6 @@ const createProject = async () => {
   const git = simpleGit();
 
   try {
-    console.log("\nCreating project directory...".bold);
     await fs.mkdir(projectPath);
 
     if (answers.solutionType === "Hosted Solution") {
@@ -108,20 +106,21 @@ const createProject = async () => {
     } else {
       await setupSelfHostedDashboard(projectPath, git);
     }
-
-    console.log("\nProject setup is complete!".green.bold);
   } catch (error) {
-    console.error("\nError setting up the project:".red, error);
+    console.error(colors.red(error.message || error));
   }
 };
 
 const setupHostedSolution = async (projectPath, git) => {
   const answers = await inquirer.prompt(HOSTED_QUESTIONS);
+  const progress = startProgress();
 
-  console.log("\nCloning the sling-fe repository...".cyan);
+  try {
+  progress.hint("Downloading the storefront");
   await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"), [
     "--depth",
     "1",
+    "--quiet",
   ]);
   await removeGitFolder(path.join(projectPath, "sling-fe"));
 
@@ -133,66 +132,58 @@ const setupHostedSolution = async (projectPath, git) => {
   envConfig.NEXT_PUBLIC_CLIENT_ID = answers.clientId;
   delete envConfig.NEXT_PUBLIC_API_URL;
 
+  progress.hint("Writing local config");
   writeEnvFile(envConfig, finalEnvPath);
 
-  const spinner = ora("Installing dependencies...").start();
-  try {
-    await installDependencies(path.join(projectPath, "sling-fe"));
-    spinner.succeed("Dependencies installed successfully.".green);
-  } catch (error) {
-    spinner.fail("Error installing dependencies.".red);
-    throw error;
-  }
+  progress.hint("Installing storefront packages — this can take a few minutes");
+  await installDependencies(path.join(projectPath, "sling-fe"));
+  progress.succeed("Storefront is ready.");
 
   console.log(
-    `\nCreate pages in hosted Studio: ${
+    `  Create pages in hosted Studio: ${
       "https://studio.sling.biz/create".underline.blue
     }`
   );
   console.log(
-    `Storefront (after keys): ${"http://localhost:4087".underline.blue}\n`
+    `  Storefront (after keys): ${"http://localhost:4087".underline.blue}\n`
   );
 
-  console.log(
-    "\nStarting the sling-fe service (Press Ctrl + C to stop)...".cyan
-  );
+  console.log("  Starting the storefront (Ctrl + C to stop)…\n".cyan);
   await runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-fe"));
+  } catch (error) {
+    progress.fail("Setup stopped.");
+    throw error;
+  }
 };
 
 const setupSelfHostedDashboard = async (projectPath, git) => {
   const answers = await inquirer.prompt(SELF_HOSTED_QUESTIONS);
+  const progress = startProgress();
 
-  const spinner = ora("Checking MongoDB...").start();
   try {
+  progress.hint("Checking MongoDB");
     const mongo = await ensureMongo(answers.mongoUri);
     answers.mongoUri = mongo.uri;
-    if (mongo.startedDocker) {
-      spinner.succeed("Started MongoDB in Docker on localhost:27017.".green);
-    } else {
-      spinner.succeed("MongoDB is reachable.".green);
-    }
-  } catch (error) {
-    spinner.fail("MongoDB is not ready.".red);
-    console.error(`\n${error.message}`.red);
-    throw error;
-  }
 
-  console.log("\nCloning the sling-fe repository...".cyan);
+  progress.hint("Downloading the storefront");
   await git.clone(FE_REPO_URL, path.join(projectPath, "sling-fe"), [
     "--depth",
     "1",
+    "--quiet",
   ]);
 
-  console.log("\nCloning the sling-api repository...".cyan);
+  progress.hint("Downloading the API");
   await git.clone(API_REPO_URL, path.join(projectPath, "sling-api"), [
     "--depth",
     "1",
+    "--quiet",
   ]);
 
-  console.log("\nCloning the sling-studio repository...".cyan);
+  progress.hint("Downloading Studio");
   await git.clone(STUDIO_REPO_URL, path.join(projectPath, "sling-studio"), [
     "--depth",
     "1",
+    "--quiet",
   ]);
 
   const feEnvPath = path.join(projectPath, "sling-fe", ".env.example");
@@ -220,53 +211,53 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
   feEnvConfig.NEXT_PUBLIC_CLIENT_ID = "";
   feEnvConfig.NEXT_PUBLIC_API_URL = "http://localhost:10001";
 
+  progress.hint("Writing local config");
   writeEnvFile(feEnvConfig, finalFeEnvPath);
   writeEnvFile(apiEnvConfig, finalApiEnvPath);
   writeEnvFile(studioEnvConfig, finalStudioEnvPath);
 
-  const installSpinner = ora("Installing dependencies...").start();
-  try {
-    await installDependencies(path.join(projectPath, "sling-fe"));
-    await installDependencies(path.join(projectPath, "sling-api"));
-    await installDependencies(path.join(projectPath, "sling-studio"));
-    installSpinner.succeed("Dependencies installed successfully.".green);
+  progress.hint("Installing storefront packages — this can take a few minutes");
+  await installDependencies(path.join(projectPath, "sling-fe"));
+  progress.hint("Installing API packages");
+  await installDependencies(path.join(projectPath, "sling-api"));
+  progress.hint("Installing Studio packages — usually the longest step");
+  await installDependencies(path.join(projectPath, "sling-studio"));
 
-    console.log("\nRemoving .git folders...".cyan);
-    await removeGitFolder(path.join(projectPath, "sling-fe"));
-    await removeGitFolder(path.join(projectPath, "sling-api"));
-    await removeGitFolder(path.join(projectPath, "sling-studio"));
-    console.log(".git folders removed.".green);
+  await removeGitFolder(path.join(projectPath, "sling-fe"));
+  await removeGitFolder(path.join(projectPath, "sling-api"));
+  await removeGitFolder(path.join(projectPath, "sling-studio"));
+
+  progress.succeed("Install finished.");
   } catch (error) {
-    installSpinner.fail("Error installing dependencies.".red);
+    progress.fail("Setup stopped.");
     throw error;
   }
 
   console.log(
-    `\nCreate pages in Studio: ${
+    `  Create pages in Studio: ${
       "http://localhost:2021/create".underline.blue
     }`
   );
-  console.log(`API: ${"http://localhost:10001".underline.blue}`);
-  console.log(`Storefront: ${"http://localhost:4087".underline.blue}\n`);
+  console.log(`  API: ${"http://localhost:10001".underline.blue}`);
+  console.log(`  Storefront: ${"http://localhost:4087".underline.blue}\n`);
   if (!answers.geminiKey) {
     console.log(
-      "No Gemini key yet. Add GEMINI_API_KEY to sling-api/.env before Create will generate.\n"
+      "  No Gemini key yet. Add GEMINI_API_KEY to sling-api/.env before Create will generate.\n"
         .yellow
     );
   }
   console.log(
-    "Sign up in Studio, then open the storefront. One company is picked automatically.\n"
+    "  Sign up in Studio, then open the storefront. One company is picked automatically.\n"
       .cyan
   );
   console.log(
-    `A second company is a choice: paste that company’s key from Studio ${
+    `  A second company is a choice: paste that company’s key from Studio ${
       "Settings → Keys".bold
     } into sling-fe/.env, then restart the storefront.\n`
   );
 
   console.log(
-    "Starting API, Studio, and the storefront together (Ctrl + C stops all)...\n"
-      .cyan
+    "  Starting API, Studio, and the storefront (Ctrl + C stops all)…\n".cyan
   );
 
   const children = [
@@ -310,6 +301,45 @@ const runCommand = (command, args, cwd) => {
   });
 };
 
+const runQuiet = (command, args, cwd) => {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    const cmd = spawn(command, args, {
+      cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+      env: INSTALL_ENV,
+      shell: process.platform === "win32",
+    });
+
+    const collect = (data) => {
+      chunks.push(data);
+      if (chunks.length > 80) {
+        chunks.shift();
+      }
+    };
+    cmd.stdout.on("data", collect);
+    cmd.stderr.on("data", collect);
+
+    cmd.on("close", (code) => {
+      if (code !== 0) {
+        const tail = Buffer.concat(chunks)
+          .toString()
+          .trim()
+          .split("\n")
+          .slice(-20)
+          .join("\n");
+        reject(
+          new Error(
+            tail || `${command} ${args.join(" ")} failed with code ${code}`
+          )
+        );
+        return;
+      }
+      resolve();
+    });
+  });
+};
+
 const startInBackground = (command, args, cwd) => {
   return spawn(command, args, {
     cwd,
@@ -334,13 +364,11 @@ const waitUntilStopped = (children) =>
   });
 
 const installDependencies = async (projectPath) => {
-  try {
-    console.log(`\nInstalling dependencies in ${projectPath}`.yellow);
-    await runCommand("yarn", ["install"], projectPath);
-  } catch (error) {
-    console.error("Error installing dependencies:".red, error);
-    throw error;
-  }
+  await runQuiet(
+    "yarn",
+    ["install", "--silent", "--no-progress", "--non-interactive"],
+    projectPath
+  );
 };
 
 createProject();
