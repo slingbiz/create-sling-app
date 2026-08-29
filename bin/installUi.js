@@ -72,7 +72,35 @@ const startProgress = () => {
   };
 };
 
+const printRunningNextSteps = ({ geminiMissing } = {}) => {
+  console.log(colors.bold.yellow("  sling.biz"));
+  console.log("");
+  console.log(
+    `  1. Sign up at ${colors.underline.blue("http://localhost:2021")}`
+  );
+  console.log("     Create an account and get going.");
+  console.log("");
+  console.log(
+    `  2. Preview Studio changes at ${colors.underline.blue(
+      "http://localhost:4087"
+    )}`
+  );
+  console.log("     The live site is the storefront.");
+  console.log("");
+  if (geminiMissing) {
+    console.log(
+      colors.yellow(
+        "  No Gemini key yet. Add GEMINI_API_KEY to sling-api/.env before Create will generate."
+      )
+    );
+    console.log("");
+  }
+  console.log(colors.gray("  Ctrl + C stops all three."));
+  console.log("");
+};
+
 module.exports = {
   printBanner,
   startProgress,
+  printRunningNextSteps,
 };
