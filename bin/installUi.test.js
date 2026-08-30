@@ -15,7 +15,7 @@ test("prints a sling.biz banner", () => {
   assert.match(logs.join("\n"), /Sling CMS/);
 });
 
-test("next steps send people to Studio then the storefront", () => {
+test("next steps send people to Studio, the API, then the storefront", () => {
   const { printRunningNextSteps } = require("./installUi");
   const logs = [];
   const original = console.log;
@@ -27,8 +27,10 @@ test("next steps send people to Studio then the storefront", () => {
   }
   const text = logs.join("\n");
   assert.match(text, /localhost:2021/);
+  assert.match(text, /localhost:10001/);
   assert.match(text, /localhost:4087/);
   assert.match(text, /Sign up/);
+  assert.match(text, /API at/);
 });
 
 test("progress can set a hint and stop", () => {

@@ -271,7 +271,7 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
   const logDir = path.join(projectPath, ".sling-logs");
   await fs.ensureDir(logDir);
   const boot = startProgress();
-  boot.hint("Starting Studio and the storefront");
+  boot.hint("Starting Studio, the API, and the storefront");
 
   const children = [
     startInBackground(
@@ -298,7 +298,7 @@ const setupSelfHostedDashboard = async (projectPath, git) => {
     await waitForPort(10001);
     await waitForPort(2021);
     await waitForPort(4087);
-    boot.succeed("Studio and the storefront are running.");
+    boot.succeed("Studio, the API, and the storefront are running.");
   } catch (error) {
     boot.fail("Could not start. Check .sling-logs in the project folder.");
     throw error;

@@ -81,7 +81,12 @@ const printRunningNextSteps = ({ geminiMissing } = {}) => {
   console.log("     Create an account and get going.");
   console.log("");
   console.log(
-    `  2. Preview Studio changes at ${colors.underline.blue(
+    `  2. API at ${colors.underline.blue("http://localhost:10001")}`
+  );
+  console.log("     Studio and the storefront talk to this.");
+  console.log("");
+  console.log(
+    `  3. Preview Studio changes at ${colors.underline.blue(
       "http://localhost:4087"
     )}`
   );

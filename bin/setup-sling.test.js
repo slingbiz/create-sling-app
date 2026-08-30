@@ -46,11 +46,13 @@ test("self-host auto-picks one company and does not require a key paste first", 
   assert.match(selfHost, /NEXT_PUBLIC_CLIENT_ID = ""/);
 });
 
-test("after start, tells people to sign up on Studio and preview on the storefront", () => {
+test("after start, tells people Studio, API, and the storefront", () => {
   assert.match(src, /printRunningNextSteps/);
   const ui = fs.readFileSync(path.join(__dirname, "installUi.js"), "utf8");
   assert.match(ui, /Sign up at/);
   assert.match(ui, /localhost:2021/);
+  assert.match(ui, /API at/);
+  assert.match(ui, /localhost:10001/);
   assert.match(ui, /Preview Studio changes at/);
   assert.match(ui, /localhost:4087/);
 });
