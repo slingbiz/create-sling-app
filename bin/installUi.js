@@ -104,8 +104,43 @@ const printRunningNextSteps = ({ geminiMissing } = {}) => {
   console.log("");
 };
 
+const printHostedNextSteps = ({ keysMissing } = {}) => {
+  console.log(colors.bold.yellow("  sling.biz"));
+  console.log("");
+  console.log(
+    `  1. Sign up at ${colors.underline.blue("https://studio.sling.biz")}`
+  );
+  console.log("     Create an account and a company.");
+  console.log("");
+  console.log(
+    `  2. Create pages at ${colors.underline.blue(
+      "https://studio.sling.biz/create"
+    )}`
+  );
+  console.log("     Hosted Create is 20 pages a day.");
+  console.log("");
+  console.log(
+    `  3. Preview the live site at ${colors.underline.blue(
+      "http://localhost:4087"
+    )}`
+  );
+  console.log("     This storefront talks to hosted Studio.");
+  console.log("");
+  if (keysMissing) {
+    console.log(
+      colors.yellow(
+        "  No company keys yet. After signup, paste them from Settings → Keys into sling-fe/.env and restart."
+      )
+    );
+    console.log("");
+  }
+  console.log(colors.gray("  Ctrl + C stops the storefront."));
+  console.log("");
+};
+
 module.exports = {
   printBanner,
   startProgress,
   printRunningNextSteps,
+  printHostedNextSteps,
 };
