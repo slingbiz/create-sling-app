@@ -46,6 +46,21 @@ test("self-host auto-picks one company and does not require a key paste first", 
   assert.match(selfHost, /NEXT_PUBLIC_CLIENT_ID = ""/);
 });
 
+test("hosted asks for company keys in plain language and starts only the storefront", () => {
+  const hosted = src.slice(
+    src.indexOf("const setupHostedSolution"),
+    src.indexOf("const setupSelfHostedDashboard"),
+  );
+  assert.match(src, /printHostedNextSteps/);
+  assert.match(src, /Company key from Settings/);
+  assert.doesNotMatch(src, /NEXT_PUBLIC_CLIENT_KEY_SECRET \(/);
+  assert.match(hosted, /startInBackground\([\s\S]*sling-fe/);
+  assert.match(hosted, /waitForPort\(4087\)/);
+  assert.doesNotMatch(hosted, /await runCommand\("yarn", \["run", "dev"\]/);
+  assert.doesNotMatch(hosted, /sling-api/);
+  assert.doesNotMatch(hosted, /sling-studio/);
+});
+
 test("after start, tells people Studio, API, and the storefront", () => {
   assert.match(src, /printRunningNextSteps/);
   const ui = fs.readFileSync(path.join(__dirname, "installUi.js"), "utf8");

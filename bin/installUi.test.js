@@ -33,6 +33,24 @@ test("next steps send people to Studio, the API, then the storefront", () => {
   assert.match(text, /API at/);
 });
 
+test("hosted next steps send people to Studio then the storefront", () => {
+  const { printHostedNextSteps } = require("./installUi");
+  const logs = [];
+  const original = console.log;
+  console.log = (line) => logs.push(String(line));
+  try {
+    printHostedNextSteps({ keysMissing: true });
+  } finally {
+    console.log = original;
+  }
+  const text = logs.join("\n");
+  assert.match(text, /studio\.sling\.biz/);
+  assert.match(text, /localhost:4087/);
+  assert.match(text, /Sign up/);
+  assert.match(text, /Settings → Keys/);
+  assert.doesNotMatch(text, /NEXT_PUBLIC_/);
+});
+
 test("progress can set a hint and stop", () => {
   const progress = startProgress();
   progress.hint("Installing Studio packages");

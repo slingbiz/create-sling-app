@@ -10,7 +10,12 @@ const https = require("https");
 const os = require("os");
 const dotenv = require("dotenv");
 const { ensureMongo } = require("./mongo-bootstrap");
-const { printBanner, startProgress, printRunningNextSteps } = require("./installUi");
+const {
+  printBanner,
+  startProgress,
+  printRunningNextSteps,
+  printHostedNextSteps,
+} = require("./installUi");
 const colors = require("colors");
 
 const FE_REPO_URL = "https://github.com/slingbiz/sling-fe.git";
@@ -29,8 +34,11 @@ const QUESTIONS = [
   {
     name: "solutionType",
     type: "list",
-    message: "Do you want a hosted solution or self-hosted dashboard?",
-    choices: ["Hosted Solution", "Self-hosted Dashboard"],
+    message: "Hosted Studio, or Studio on this machine?",
+    choices: [
+      { name: "Hosted — studio.sling.biz", value: "Hosted Solution" },
+      { name: "Self-hosted — run everything locally", value: "Self-hosted Dashboard" },
+    ],
   },
   {
     name: "projectName",
@@ -50,16 +58,14 @@ const HOSTED_QUESTIONS = [
   {
     name: "clientKeySecret",
     type: "input",
-    message: `
-Enter your NEXT_PUBLIC_CLIENT_KEY_SECRET (You can get this key after successful signup on studio.sling.biz and get the key from company settings.
-You can also skip it and update it later in the .env):\n`,
+    message:
+      "Company key from Settings → Keys. Skip if you have not signed up yet:",
     default: "",
   },
   {
     name: "clientId",
     type: "input",
-    message:
-      "\nEnter your NEXT_PUBLIC_CLIENT_ID (For example, your@email.com):\n",
+    message: "Company email from Settings → Keys. Skip if you have not signed up yet:",
     default: "",
   },
 ];
@@ -173,22 +179,37 @@ const setupHostedSolution = async (projectPath, git) => {
   progress.hint("Installing storefront packages — this can take a few minutes");
   await installDependencies(path.join(projectPath, "sling-fe"));
   progress.succeed("Storefront is ready.");
-
-  console.log(
-    `  Create pages in hosted Studio: ${
-      "https://studio.sling.biz/create".underline.blue
-    }`
-  );
-  console.log(
-    `  Storefront (after keys): ${"http://localhost:4087".underline.blue}\n`
-  );
-
-  console.log("  Starting the storefront (Ctrl + C to stop)…\n".cyan);
-  await runCommand("yarn", ["run", "dev"], path.join(projectPath, "sling-fe"));
   } catch (error) {
     progress.fail("Setup stopped.");
     throw error;
   }
+
+  const logDir = path.join(projectPath, ".sling-logs");
+  await fs.ensureDir(logDir);
+  const boot = startProgress();
+  boot.hint("Starting the storefront");
+
+  const children = [
+    startInBackground(
+      "yarn",
+      ["run", "dev"],
+      path.join(projectPath, "sling-fe"),
+      path.join(logDir, "storefront.log")
+    ),
+  ];
+
+  try {
+    await waitForPort(4087);
+    boot.succeed("The storefront is running.");
+  } catch (error) {
+    boot.fail("Could not start. Check .sling-logs in the project folder.");
+    throw error;
+  }
+
+  printHostedNextSteps({
+    keysMissing: !answers.clientKeySecret || !answers.clientId,
+  });
+  await waitUntilStopped(children);
 };
 
 const setupSelfHostedDashboard = async (projectPath, git) => {
